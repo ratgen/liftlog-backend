@@ -3,6 +3,7 @@ on:
   push:
     paths:
       - 'backend/**.js'
+  workflow-dispatch:
 jobs:
   Build-Backend:
     runs-on: self-hosted
