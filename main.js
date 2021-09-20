@@ -20,7 +20,7 @@ let corsOptions = {
 //Support preflight requests
 app.options('*', cors(corsOptions));
 
-const PORT = process.env.PORT;
+const PORT = 3001;
 
 const userRoute = require('./routes/users.js')
 const workoutRoute = require('./routes/workouts.js')
@@ -28,8 +28,6 @@ const historyRoute = require('./routes/workout_history.js')
 app.use(userRoute)
 app.use(workoutRoute)
 app.use(historyRoute)
-
-app.use(serveStatic("../frontend/dist"));
 
 console.log("port is " + PORT);
 app.listen(PORT, function () {
