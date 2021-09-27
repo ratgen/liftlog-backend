@@ -20,7 +20,7 @@ let corsOptions = {
 //Support preflight requests
 app.options('*', cors(corsOptions));
 
-const PORT = 3001;
+const PORT = process.env.PORT;
 
 const userRoute = require('./routes/users.js')
 const workoutRoute = require('./routes/workouts.js')
