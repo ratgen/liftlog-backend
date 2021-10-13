@@ -1,5 +1,6 @@
 use rocket::serde::json::Json;
 use rocket::serde::{Serialize, Deserialize};
+use mongodb::{bson::doc, options::ClientOptions, Client};
 use std::vec::Vec;
 
 
@@ -39,7 +40,28 @@ fn hello(workout : Json<Workout> ) -> String {
     return format!("Workout is {:?}", workout);
 }
 
+async fn launch_dbase() -> mongodb::error::Result<()> {
+    println!("lanching dbase");
+    // Parse a connection string into an options struct.
+    let mut client_options = ClientOptions::parse("mongodb://peter:Pepsi1609@localhost:27017/?authSource=admin").await?;
+
+    // Manually set an option.
+    client_options.app_name = Some("My App".to_string());
+
+    // Get a handle to the deployment.
+    let client = Client::with_options(client_options)?;
+
+    // List the names of the databases in that deployment.
+    for db_name in client.list_database_names(None, None).await? {
+        println!("{}", db_name);
+    }
+    Ok(())
+}
+
+
 #[launch]
-fn rocket() -> _ {
+async fn rocket() -> _ {
+    let _result = launch_dbase().await;
     rocket::build().mount("/", routes![hello])
 }
+
