@@ -1,0 +1,25 @@
+use rocket::serde::json::Json;
+
+
+#[macro_use] extern crate rocket;
+
+#[derive(FromForm)]
+struct Workout<'r> {
+    title: &'r str,
+    duedate: u16
+}
+
+#[derive(Debug)]
+enum Error {
+    NotIncluding
+}
+#[post("/workout", format = "json", data = "<workout>")]
+fn hello(workout : Json<Workout> ) {
+    let str = "Hello, world!" + workout.title;
+    return str;
+}
+
+#[launch]
+fn rocket() -> _ {
+    rocket::build().mount("/", routes![hello])
+}
