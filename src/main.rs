@@ -31,8 +31,8 @@ impl ToString for Exercise {
 #[derive(Serialize, Deserialize, Debug)]
 struct Workout<'r> {
     title: &'r str,
-    dueDate: u64,
-    exerciseList: Vec<Exercise>
+    due_date: u64,
+    exercise_list: Vec<Exercise>
 }
 
 #[post("/workout", format = "json", data = "<workout>")]
