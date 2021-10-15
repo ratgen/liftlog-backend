@@ -10,7 +10,7 @@ use std::vec::Vec;
 #[derive(Serialize, Deserialize, Debug)]
 struct Repetition {
     repetitions: f32,
-    weight: f32
+    weight: f16
 }
 impl ToString for Repetition {
     fn to_string(&self) -> String {
