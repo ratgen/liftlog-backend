@@ -4,13 +4,12 @@ use rocket::State;
 use mongodb::{bson::doc, options::ClientOptions, Client, Database};
 use std::vec::Vec;
 
-
 #[macro_use] extern crate rocket;
 
 #[derive(Serialize, Deserialize, Debug)]
 struct Repetition {
     repetitions: f32,
-    weight: f16
+    weight: f32
 }
 impl ToString for Repetition {
     fn to_string(&self) -> String {
