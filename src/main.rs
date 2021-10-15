@@ -1,6 +1,7 @@
 use rocket::serde::json::Json;
 use rocket::serde::{Serialize, Deserialize};
-use mongodb::{bson::doc, options::ClientOptions, Client};
+use rocket::State;
+use mongodb::{bson::doc, options::ClientOptions, Client, Database};
 use std::vec::Vec;
 
 
@@ -8,8 +9,8 @@ use std::vec::Vec;
 
 #[derive(Serialize, Deserialize, Debug)]
 struct Repetition {
-    repetitions: u8,
-    weight: u8
+    repetitions: f32,
+    weight: f32
 }
 impl ToString for Repetition {
     fn to_string(&self) -> String {
@@ -29,9 +30,9 @@ impl ToString for Exercise {
 }
 
 #[derive(Serialize, Deserialize, Debug)]
-struct Workout<'r> {
-    title: &'r str,
-    due_date: u64,
+struct Workout {
+    title: String,
+    due_date: f64,
     exercise_list: Vec<Exercise>
 }
 
@@ -40,7 +41,22 @@ fn hello(workout : Json<Workout> ) -> String {
     return format!("Workout is {:?}", workout);
 }
 
-async fn launch_dbase() -> mongodb::error::Result<()> {
+#[get("/workout")]
+async fn get_workout(services: &State<AppServices>) -> String {
+    let collection: mongodb::Collection<Workout> = services.database.collection("workouts");
+    let result = collection.find_one(
+        doc! {
+            "title": "Eftermiddagstræning",
+        }, None
+    ).await.unwrap().unwrap();
+    return format!("{:?}", result);
+}
+
+struct AppServices {
+    database: Database
+}
+
+async fn launch_dbase() -> mongodb::error::Result<Database> {
     println!("lanching dbase");
     // Parse a connection string into an options struct.
     let mut client_options = ClientOptions::parse("mongodb://peter:Pepsi1609@localhost:27017/?authSource=admin").await?;
@@ -51,17 +67,18 @@ async fn launch_dbase() -> mongodb::error::Result<()> {
     // Get a handle to the deployment.
     let client = Client::with_options(client_options)?;
 
-    // List the names of the databases in that deployment.
-    for db_name in client.list_database_names(None, None).await? {
-        println!("{}", db_name);
-    }
-    Ok(())
+    let database = client.database("workout_db");
+    
+    Ok(database)
 }
 
 
 #[launch]
 async fn rocket() -> _ {
-    let _result = launch_dbase().await;
-    rocket::build().mount("/", routes![hello])
+    let database = launch_dbase().await;
+    rocket::build()
+        .manage(AppServices {database: database.unwrap()})
+        .mount("/", routes![hello])
+        .mount("/", routes![get_workout])
 }
 
