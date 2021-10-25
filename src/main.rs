@@ -4,7 +4,7 @@ use rocket::http::{Status, ContentType};
 use rocket::State;
 use rocket::http::{CookieJar, Cookie};
 use jsonwebtoken::errors::ErrorKind;
-use mongodb::{bson::doc, options::ClientOptions, Client, Database};
+use mongodb::{bson::doc, bson::oid::ObjectId, options::ClientOptions, Client, Database};
 use jsonwebtoken::{decode, DecodingKey, Validation, Algorithm};
 
 #[macro_use] extern crate rocket;
@@ -60,6 +60,14 @@ struct Token {
 }
 
 #[derive(Serialize, Deserialize, Debug)]
+struct User {
+    _id: String,
+    name: String,
+    email: String,
+    password: String
+}
+
+#[derive(Serialize, Deserialize, Debug)]
 enum AuthErrors {
     ParsingError,
     NotValid,
@@ -67,7 +75,7 @@ enum AuthErrors {
     TokenExpired
 }
 
-async fn verify_cookie(cookie: &Cookie<'_>) -> Result<bool, AuthErrors> {
+async fn verify_cookie(cookie: &Cookie<'_>, database: &Database) -> Result<bool, AuthErrors> {
     println!("{}", cookie);
     
     let parsed_token: CookiesValues = match serde_json::from_str(cookie.value()) {
@@ -87,8 +95,15 @@ async fn verify_cookie(cookie: &Cookie<'_>) -> Result<bool, AuthErrors> {
         },
     };
 
-    println!("{:?}", token_data.claims);
-    println!("{:?}", token_data.header);
+    let users: mongodb::Collection<User> = database.collection("users");
+
+    let result = users.find_one(
+        doc! {
+            "_id" : ObjectId::parse_str(&token_data.claims.userId).unwrap()
+        }, None
+        ).await.unwrap().unwrap();
+
+    println!("{:?}", result);
 
     Ok(true)
 }
@@ -101,7 +116,7 @@ fn hello(workout : Json<Workout> ) -> String {
 #[get("/workout")]
 async fn get_workout(cookies: &CookieJar<'_>, services: &State<AppServices>) -> Option<(Status, (ContentType, String))> {
     let jwt_cookie = cookies.get("jwt").unwrap();
-    let valid = match verify_cookie(&jwt_cookie).await {
+    let valid = match verify_cookie(&jwt_cookie, &services.database).await {
         Ok(b) => b,
         Err(_) => return Some((Status::BadRequest, (ContentType::Text, format!("BadRequest"))))
     };
