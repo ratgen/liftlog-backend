@@ -7,13 +7,6 @@ info:
 servers:
   - url: https://example.io/v1
 
-components:
-  securitySchemes:
-    BasicAuth:
-      type: http
-      scheme: basic
-security:
-  - BasicAuth: []
 
 tags:
   - name: users
@@ -23,43 +16,29 @@ paths:
   /user:
     post:
       description: Creates a user
-      #  ----- Added lines  ----------------------------------------
-      parameters:
-        - name: limit
-          in: query
-          description: Limits the number of items on a page
-          schema:
-            type: integer
-        - name: offset
-          in: query
-          description: Specifies the page number of the artists to be displayed
-          schema:
-            type: integer
-      #  ---- /Added lines  ----------------------------------------       
+      #  ---- /Added lines  ----------------------------------------  
+      requestBody:
+        description: Optional description in *Markdown*
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/User'
+          text/plain:
+            schema:
+              type: string
       tags:
       - users
-      
       responses:
         '200':
-          description: 
+          description: Successful creation of the user.
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  type: object
-                  required:
-                    - username
-                  properties:
-                    artist_name:
-                      type: string
-                    artist_genre:
-                      type: string
-                    albums_recorded:
-                      type: integer
-                    username:
-                      type: string
-
+                type: object
+                properties:
+                  userId:
+                    type: string
         '400':
           description: Invalid request
           content:
@@ -69,3 +48,23 @@ paths:
                 properties:   
                   message:
                     type: string
+components:
+  schemas:
+    User:
+      title: Component containing a user  
+      type: object
+      properties:
+        name:
+          type: string
+          description: Message text
+        email:
+          type: string
+          description: Email of the user
+        password:
+          type: string
+          description: Chosen password of the user
+      required:
+        - name
+        - email
+        - password
+      
